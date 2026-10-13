@@ -1,0 +1,233 @@
+# =====================================================================
+#  KitPvPFishing - configurazione
+#  Server: Spigot/Bukkit 1.8.8 (client 1.8.9)
+# =====================================================================
+#
+#  COME FUNZIONANO LE PROBABILITA' (pesi relativi)
+#  ----------------------------------------------
+#  Ogni "weight" e' un peso RELATIVO: i pesi NON devono sommare a 100.
+#  Probabilita' di una voce = suo peso / somma dei pesi delle voci valide.
+#  Esempio: fish 80, armor 15, commands 5  ->  80%, 15%, 5%.
+#  Lo stesso risultato si ottiene con 16, 3, 1.
+#
+#  Ad ogni cattura RIUSCITA (solo quando il giocatore tira su un oggetto):
+#    1) si estrae UNA categoria tra fish / armor / commands;
+#    2) si estrae il pesce, il pezzo di armatura oppure la ricompensa a comandi;
+#    3) per l'armatura si estraggono, in modo separato e indipendente,
+#       il livello di Protezione e quello di Indistruttibilita'.
+#
+#  Le categorie disattivate, con peso 0 o senza ricompense valide vengono
+#  escluse e le probabilita' vengono ricalcolate sulle categorie rimaste.
+#  Se non resta nessuna categoria valida, la pesca rimane quella vanilla
+#  e nel log compare un avviso.
+#
+#  Usa "/kitpvpfishing chances" in gioco per vedere le percentuali reali.
+#  Dopo ogni modifica: "/kitpvpfishing reload". Se il file contiene errori,
+#  resta attiva l'ultima configurazione valida e la console indica il
+#  percorso esatto di ogni impostazione sbagliata.
+#
+#  Colori: usa i codici con "&" (es. &a verde, &b azzurro, &l grassetto).
+#  Le stringhe che iniziano con "&" o "%" vanno SEMPRE tra virgolette.
+# =====================================================================
+
+# Abilita/disabilita l'intero plugin. Con false la pesca e' vanilla.
+enabled: true
+
+# Mondi in cui la pesca personalizzata e' attiva. Lista vuota = tutti i mondi.
+# Esempio:
+# worlds:
+#   - kitpvp
+#   - arena
+worlds: []
+
+# Scrive nel log ogni estrazione (utile per i test).
+debug: false
+
+# ---------------------------------------------------------------------
+#  1) CATEGORIE (prima estrazione)
+# ---------------------------------------------------------------------
+categories:
+  fish:
+    enabled: true
+    weight: 80
+  armor:
+    enabled: true
+    weight: 15
+  commands:
+    enabled: true
+    # Nota: con la sola ricompensa di esempio (disattivata) questa categoria
+    # viene esclusa automaticamente finche' non attivi almeno una ricompensa.
+    weight: 5
+
+# ---------------------------------------------------------------------
+#  2a) PESCI
+#  Il giocatore riceve sempre UN solo pesce, che sostituisce il bottino
+#  vanilla (niente spazzatura o tesori) e arriva come nella pesca normale.
+#  Tipi disponibili: cod, salmon, clownfish, pufferfish.
+#  I pesi predefiniti sono le proporzioni vanilla della 1.8.
+# ---------------------------------------------------------------------
+fish:
+  types:
+    cod:
+      enabled: true
+      weight: 60
+      display-name: "Pesce crudo"
+    salmon:
+      enabled: true
+      weight: 25
+      display-name: "Salmone crudo"
+    clownfish:
+      enabled: true
+      weight: 2
+      display-name: "Pesce pagliaccio"
+    pufferfish:
+      enabled: true
+      weight: 13
+      display-name: "Pesce palla"
+
+# ---------------------------------------------------------------------
+#  2b) ARMATURE DI DIAMANTE
+#  Viene assegnato UN solo pezzo per cattura, mai un set completo.
+#  Il pezzo va direttamente nell'inventario; se e' pieno viene lasciato
+#  a terra nella posizione del giocatore.
+# ---------------------------------------------------------------------
+armor:
+  pieces:
+    helmet:
+      enabled: true
+      weight: 25
+      display-name: "Elmo di diamante"
+    chestplate:
+      enabled: true
+      weight: 25
+      display-name: "Corazza di diamante"
+    leggings:
+      enabled: true
+      weight: 25
+      display-name: "Gambali di diamante"
+    boots:
+      enabled: true
+      weight: 25
+      display-name: "Stivali di diamante"
+
+  # Livelli degli incantesimi (anche oltre i limiti vanilla).
+  # "Indistruttibilita'" = incantesimo Unbreaking: l'oggetto conserva la
+  # normale durabilita', si consuma solo piu' lentamente.
+  #
+  # Un livello e' estraibile solo se:
+  #   - e' compreso tra min e max (inclusi);
+  #   - e' attivo (enabled: true);
+  #   - ha peso maggiore di 0.
+  # I livelli dell'intervallo NON elencati in "levels" usano "default-weight"
+  # (metti default-weight: 0 per escluderli).
+  # I due incantesimi vengono estratti separatamente: puoi ottenere ad esempio
+  # Protezione 4 con Indistruttibilita' 10 oppure Protezione 10 con Indistruttibilita' 3.
+  # Livelli consentiti: da 1 a 32767. Oltre il 10 il client 1.8.9 mostra
+  # "enchantment.level.N" al posto del numero romano (l'effetto funziona comunque).
+  enchantments:
+    protection:
+      min: 4
+      max: 10
+      default-weight: 1
+      # Pesi decrescenti: i livelli alti sono piu' rari.
+      levels:
+        4:  { enabled: true, weight: 30 }
+        5:  { enabled: true, weight: 25 }
+        6:  { enabled: true, weight: 18 }
+        7:  { enabled: true, weight: 12 }
+        8:  { enabled: true, weight: 8 }
+        9:  { enabled: true, weight: 5 }
+        10: { enabled: true, weight: 2 }
+    unbreaking:
+      min: 3
+      max: 10
+      default-weight: 1
+      levels:
+        3:  { enabled: true, weight: 30 }
+        4:  { enabled: true, weight: 22 }
+        5:  { enabled: true, weight: 16 }
+        6:  { enabled: true, weight: 12 }
+        7:  { enabled: true, weight: 9 }
+        8:  { enabled: true, weight: 6 }
+        9:  { enabled: true, weight: 3 }
+        10: { enabled: true, weight: 2 }
+
+  # Aspetto dell'oggetto. Placeholder disponibili:
+  #   %piece%              nome del pezzo (display-name sopra)
+  #   %protection%         livello di Protezione (es. 7)
+  #   %protection_roman%   livello di Protezione in numeri romani (es. VII)
+  #   %unbreaking%         livello di Indistruttibilita'
+  #   %unbreaking_roman%   livello di Indistruttibilita' in numeri romani
+  #   %player%             nome del giocatore che l'ha pescato
+  # name: "" lascia il nome vanilla; lore: [] non aggiunge righe.
+  item:
+    name: "&b%piece%"
+    lore:
+      - "&7Protezione: &a%protection_roman%"
+      - "&7Indistruttibilità: &a%unbreaking_roman%"
+      - "&8Pescato da %player%"
+    # true nasconde le righe vanilla degli incantesimi (restano attivi).
+    hide-enchants: false
+
+# ---------------------------------------------------------------------
+#  2c) RICOMPENSE TRAMITE COMANDI
+#  Puoi aggiungere quante ricompense vuoi, ognuna con un ID univoco.
+#  Quando esce la categoria "commands" viene estratta UNA sola ricompensa
+#  tra quelle attive e vengono eseguiti, dalla console, TUTTI i suoi comandi.
+#  Il bottino vanilla viene rimosso; la consegna dell'oggetto (key, soldi...)
+#  e' gestita dal plugin che riceve il comando.
+#
+#  Campi:
+#    enabled       true/false
+#    weight        peso relativo tra le ricompense a comandi
+#    display-name  nome mostrato (placeholder %reward% nel messaggio)
+#    message       messaggio al giocatore; "" = nessun messaggio;
+#                  se manca si usa messages.reward-command-default
+#    commands      lista di comandi, senza "/" iniziale
+#
+#  Placeholder nei comandi: %player% (nome), %uuid%, %world%.
+#  Placeholder nel messaggio: %player%, %reward%.
+# ---------------------------------------------------------------------
+command-rewards:
+  # ESEMPIO - disattivato. Il comando qui sotto e' un SEGNAPOSTO, non un comando
+  # reale: ogni plugin di casse/key ha la propria sintassi. Sostituiscilo con il
+  # comando del TUO plugin (consulta la sua documentazione), poi metti enabled: true.
+  key_comune:
+    enabled: false
+    weight: 100
+    display-name: "&aKey Comune"
+    message: "&7Hai pescato una %reward%&7!"
+    commands:
+      - "SOSTITUISCI-CON-IL-COMANDO-DEL-TUO-PLUGIN %player% comune 1"
+
+  # Altro esempio di struttura (rimuovi il "#" per usarlo):
+  # key_rara:
+  #   enabled: true
+  #   weight: 10
+  #   display-name: "&6Key Rara"
+  #   message: "&6Fortuna! &7Hai pescato una %reward%&7!"
+  #   commands:
+  #     - "SOSTITUISCI-CON-IL-COMANDO-DEL-TUO-PLUGIN %player% rara 1"
+  #     - "broadcast %player% ha pescato una key rara!"
+
+# ---------------------------------------------------------------------
+#  MESSAGGI (colori con &). Un messaggio impostato a "" non viene inviato.
+# ---------------------------------------------------------------------
+messages:
+  # false = nessun messaggio quando si pesca una ricompensa
+  # (pesce, armatura e messaggi delle ricompense a comandi).
+  reward-messages-enabled: true
+  prefix: "&8[&bPesca&8] &r"
+  # Placeholder: %item%, %player%
+  reward-fish: "&7Hai pescato: &f%item%&7."
+  # Placeholder: gli stessi di armor.item
+  reward-armor: "&7Hai pescato &b%piece% &7(Protezione &a%protection%&7, Indistruttibilità &a%unbreaking%&7)!"
+  # Usato dalle ricompense a comandi senza "message". Placeholder: %reward%, %player%
+  reward-command-default: "&7Hai pescato: %reward%&7!"
+  inventory-full: "&cInventario pieno! &7L'oggetto è stato lasciato a terra vicino a te."
+  no-permission: "&cNon hai il permesso per usare questo comando."
+  usage: "&7Uso: &f/%label% reload &7oppure &f/%label% chances"
+  # Placeholder: %warnings%
+  reload-success: "&aConfigurazione ricaricata. &7Avvisi: &e%warnings%"
+  # Placeholder: %errors%
+  reload-failed: "&cConfigurazione non valida (&e%errors% &cerrori): resta attiva l'ultima configurazione valida."

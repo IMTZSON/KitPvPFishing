@@ -1,0 +1,16 @@
+name: KitPvPFishing
+version: ${project.version}
+main: it.kitpvpfishing.KitPvPFishingPlugin
+description: Pesca personalizzata per KitPvP 1.8.x (pesci, armature di diamante incantate, ricompense a comandi).
+load: POSTWORLD
+
+commands:
+  kitpvpfishing:
+    description: Comandi amministrativi di KitPvPFishing.
+    usage: /<command> reload | chances
+    aliases: [kpfishing]
+
+permissions:
+  kitpvpfishing.admin:
+    description: Permette di usare /kitpvpfishing reload e /kitpvpfishing chances.
+    default: op
